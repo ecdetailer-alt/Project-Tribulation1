@@ -9,6 +9,7 @@ local menuFolder = ReplicatedStorage:WaitForChild("Menu")
 local partyFolder = ReplicatedStorage:WaitForChild("Party")
 
 local MenuActions = require(menuFolder:WaitForChild("MenuActions"))
+local CameraScenes = require(menuFolder:WaitForChild("CameraScenes"))
 local MenuController = require(menuFolder:WaitForChild("MenuController"))
 local SignalBus = require(menuFolder:WaitForChild("SignalBus"))
 local PartyClient = require(partyFolder:WaitForChild("PartyClient"))
@@ -21,13 +22,17 @@ local menuController = MenuController.new(signalBus)
 local partyClient = PartyClient.new(signalBus)
 local characterPreview = CharacterPreview.new(menuView:GetCharacterViewport())
 
-characterPreview:bindLocalPlayer()
+characterPreview:BindLocalPlayer()
 
 local connections = {}
 local isRunning = true
 
 menuView:BindActions(function(actionId)
 	signalBus:Fire("MenuActionRequested", { ActionId = actionId })
+end)
+
+menuView:BindActionHover(function(actionId)
+	signalBus:Fire("MenuActionHovered", { ActionId = actionId })
 end)
 
 menuView:BindPartyActions({
@@ -50,6 +55,12 @@ table.insert(connections, signalBus:Connect("MenuStatus", function(payload)
 	menuView:SetStatus(payload and payload.Text or "", payload and payload.IsError == true)
 end))
 
+table.insert(connections, signalBus:Connect("MenuSceneSelected", function(payload)
+	local sceneId = payload and payload.SceneId
+	local scene = CameraScenes[sceneId]
+	menuView:SetSceneName(scene and scene.DisplayName or sceneId)
+end))
+
 table.insert(connections, signalBus:Connect("PartyStateUpdated", function(state)
 	menuView:SetPartyState(state or {})
 end))
@@ -63,27 +74,16 @@ table.insert(connections, signalBus:Connect("PartyInviteReceived", function(payl
 	menuView:SetStatus(string.format("Invite received from %s.", fromName), false)
 end))
 
+table.insert(connections, signalBus:Connect("MenuLightningStrike", function()
+	menuView:TriggerLightningFlash()
+end))
+
 table.insert(connections, RunService.RenderStepped:Connect(function(dt)
 	menuView:Step(dt)
 end))
 
 menuController:Start()
 partyClient:RequestState()
-
-task.spawn(function()
-	while isRunning do
-		task.wait(math.random(16, 28))
-		if not isRunning then
-			return
-		end
-
-		signalBus:Fire("MenuLightningStrike", {
-			Magnitude = 0.2,
-			Duration = 0.33,
-		})
-		menuView:TriggerLightningFlash()
-	end
-end)
 
 local function cleanup()
 	if not isRunning then

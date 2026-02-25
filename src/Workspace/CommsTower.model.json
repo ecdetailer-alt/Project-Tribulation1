@@ -1,0 +1,9 @@
+{
+  "ClassName": "Part",
+  "Properties": {
+    "Anchored": true,
+    "CanCollide": true,
+    "Size": [3, 46, 3],
+    "Position": [-78, 25, -14]
+  }
+}

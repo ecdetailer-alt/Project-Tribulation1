@@ -213,7 +213,7 @@ function CharacterPreview:Destroy()
 	end
 end
 
-function CharacterPreview.bindLocalPlayer(self)
+function CharacterPreview:BindLocalPlayer()
 	self:BindPlayer(localPlayer)
 end
 

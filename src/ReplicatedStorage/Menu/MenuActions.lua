@@ -1,7 +1,7 @@
 local MenuActions = {
 	{
-		Id = "PlayCampaign",
-		Label = "Play (Campaign)",
+		Id = "ContinueCampaign",
+		Label = "Continue (Campaign)",
 		Kind = "Teleport",
 		Destination = "Campaign",
 	},
@@ -18,10 +18,10 @@ local MenuActions = {
 		PanelId = "Party",
 	},
 	{
-		Id = "CharacterCustomization",
-		Label = "Character Customization",
+		Id = "Character",
+		Label = "Character",
 		Kind = "Panel",
-		PanelId = "CharacterCustomization",
+		PanelId = "Character",
 	},
 	{
 		Id = "Settings",

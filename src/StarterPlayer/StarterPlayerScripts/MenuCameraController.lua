@@ -21,6 +21,21 @@ local function resolveScene(sceneId)
 	return CameraScenes[sceneId] or CameraScenes[MenuConfig.Cinematics.DefaultScene]
 end
 
+local function getAnchorPair(sceneId)
+	local anchorConfig = MenuConfig.SceneAnchors[sceneId]
+	if not anchorConfig then
+		return nil, nil
+	end
+
+	local cameraPart = Workspace:FindFirstChild(anchorConfig.CameraPart)
+	local lookAtPart = Workspace:FindFirstChild(anchorConfig.LookAtPart)
+	if cameraPart and lookAtPart and cameraPart:IsA("BasePart") and lookAtPart:IsA("BasePart") then
+		return cameraPart, lookAtPart
+	end
+
+	return nil, nil
+end
+
 function MenuCameraController.new()
 	local self = setmetatable({}, MenuCameraController)
 	self._signalBus = SignalBus.getShared()
@@ -34,6 +49,8 @@ function MenuCameraController.new()
 	self._camera = Workspace.CurrentCamera
 	self._previousCameraType = nil
 	self._previousFieldOfView = nil
+	self._anchorPart = nil
+	self._lookAtPart = nil
 	return self
 end
 
@@ -66,7 +83,11 @@ end
 function MenuCameraController:_applyScene(sceneId)
 	self._scene = resolveScene(sceneId)
 	self._sceneTime = 0
-	self._camera.FieldOfView = self._scene.Fov
+	self._anchorPart, self._lookAtPart = getAnchorPair(sceneId)
+
+	if self._camera and self._scene then
+		self._camera.FieldOfView = self._scene.Fov
+	end
 end
 
 function MenuCameraController:TriggerShake(magnitude, duration)
@@ -84,10 +105,22 @@ function MenuCameraController:_update(dt)
 	self._sceneTime += dt
 	local scene = self._scene
 
+	if not self._anchorPart or not self._lookAtPart then
+		self._anchorPart, self._lookAtPart = getAnchorPair(scene.Id)
+	end
+
 	local panAlpha = math.clamp(self._sceneTime / scene.PanDuration, 0, 1)
 	local panT = easeInOutSine(panAlpha)
-	local basePosition = scene.StartPosition:Lerp(scene.EndPosition, panT)
-	local lookAtPosition = scene.LookAtStart:Lerp(scene.LookAtEnd, panT)
+
+	local basePosition
+	local lookAtPosition
+	if self._anchorPart and self._lookAtPart then
+		basePosition = self._anchorPart.Position + scene.StartOffset:Lerp(scene.EndOffset, panT)
+		lookAtPosition = self._lookAtPart.Position + scene.LookOffsetStart:Lerp(scene.LookOffsetEnd, panT)
+	else
+		basePosition = Vector3.new(0, 12, -30) + scene.StartOffset:Lerp(scene.EndOffset, panT)
+		lookAtPosition = Vector3.new(0, 4, 0)
+	end
 
 	local swayPhase = self._sceneTime * scene.SwayFrequency * math.pi * 2
 	local swayOffset = Vector3.new(
@@ -95,6 +128,15 @@ function MenuCameraController:_update(dt)
 		math.sin(swayPhase * 0.5) * scene.SwayAmplitude.Y,
 		math.sin(swayPhase * 0.25) * scene.SwayAmplitude.Z
 	)
+
+	-- Black Fog scene has a tiny handheld tremor.
+	if scene.Id == "BlackFogHorizon" then
+		swayOffset += Vector3.new(
+			(math.noise(self._sceneTime * 0.8, 0, 0) - 0.5) * 0.12,
+			(math.noise(0, self._sceneTime * 0.9, 0) - 0.5) * 0.08,
+			0
+		)
+	end
 
 	self._shakeStrength = math.max(0, self._shakeStrength - self._shakeFadePerSecond * dt)
 	local shakeOffset = Vector3.zero
