@@ -21,6 +21,9 @@ local menuView = MenuView.new(playerGui, MenuActions)
 local menuController = MenuController.new(signalBus)
 local partyClient = PartyClient.new(signalBus)
 local characterPreview = CharacterPreview.new(menuView:GetCharacterViewport())
+local menuSettings = {
+	HoverSceneSwitching = true,
+}
 
 characterPreview:BindLocalPlayer()
 
@@ -47,6 +50,15 @@ menuView:BindPartyActions({
 	end,
 })
 
+menuView:BindSettingsActions({
+	OnToggleHoverSceneSwitching = function()
+		signalBus:Fire("MenuSettingChanged", {
+			Key = "HoverSceneSwitching",
+			Value = not menuSettings.HoverSceneSwitching,
+		})
+	end,
+})
+
 table.insert(connections, signalBus:Connect("MenuPanelChanged", function(payload)
 	menuView:SetPanel(payload and payload.PanelId)
 end))
@@ -59,6 +71,13 @@ table.insert(connections, signalBus:Connect("MenuSceneSelected", function(payloa
 	local sceneId = payload and payload.SceneId
 	local scene = CameraScenes[sceneId]
 	menuView:SetSceneName(scene and scene.DisplayName or sceneId)
+end))
+
+table.insert(connections, signalBus:Connect("MenuSettingsUpdated", function(settings)
+	menuSettings = {
+		HoverSceneSwitching = settings and settings.HoverSceneSwitching == true,
+	}
+	menuView:SetSettings(menuSettings)
 end))
 
 table.insert(connections, signalBus:Connect("PartyStateUpdated", function(state)
@@ -84,6 +103,7 @@ end))
 
 menuController:Start()
 partyClient:RequestState()
+menuView:SetSettings(menuSettings)
 
 local function cleanup()
 	if not isRunning then

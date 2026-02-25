@@ -4,6 +4,27 @@
     "Anchored": true,
     "CanCollide": true,
     "Size": [3, 46, 3],
-    "Position": [-78, 25, -14]
-  }
+    "Position": [-78, 25, -14],
+    "Material": "Metal",
+    "Color": [0.21, 0.24, 0.28]
+  },
+  "Children": [
+    {
+      "ClassName": "Attachment",
+      "Name": "TowerTipAttachment",
+      "Properties": {
+        "Position": [0, 23, 0]
+      }
+    },
+    {
+      "ClassName": "Smoke",
+      "Name": "TowerSmoke",
+      "Properties": {
+        "Enabled": true,
+        "Opacity": 0.12,
+        "RiseVelocity": 2,
+        "Size": 4
+      }
+    }
+  ]
 }

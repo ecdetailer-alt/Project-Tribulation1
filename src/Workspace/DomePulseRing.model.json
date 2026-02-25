@@ -1,10 +1,25 @@
 {
-  "ClassName": "Part",
-  "Properties": {
-    "Anchored": true,
-    "CanCollide": false,
-    "Transparency": 1,
-    "Size": [406, 6, 2],
-    "Position": [0, 88, 158]
-  }
+    "ClassName":  "Part",
+    "Properties":  {
+                       "Anchored":  true,
+                       "CanCollide":  false,
+                       "Transparency":  1,
+                       "Size":  [
+                                    406,
+                                    6,
+                                    2
+                                ],
+                       "Position":  [
+                                        0,
+                                        88,
+                                        158
+                                    ],
+                       "Color":  [
+                                     0.56,
+                                     0.92,
+                                     1
+                                 ],
+                       "Material":  "Neon",
+                       "CastShadow":  false
+                   }
 }

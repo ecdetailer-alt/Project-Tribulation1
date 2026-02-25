@@ -15,6 +15,15 @@
 - Party scaffold client: `src/ReplicatedStorage/Party/PartyClient.lua`
 - Party scaffold server: `src/ServerScriptService/PartyServer.server.lua`
 - Static menu scene assets: `src/Workspace/*.model.json`
+- Post-processing shader stack assets: `src/Lighting/*.model.json`
+
+## Scene Rigs Added
+
+- `BreachlineSetDress` model (hazard strips, debris, ash emitter attachment)
+- `DomeImpactRig` model (impact spark attachment + impact pulse light)
+- `CityMegablockCluster` model (extra skyline depth + window glow)
+- Fire pit now includes attachment + ember emitter + point light + fire object
+- Breach horizon now includes attachment + dust emitter + glow light
 
 ## PlaceId Configuration
 
@@ -26,6 +35,7 @@ Set `TeleportDestinations.Campaign.PlaceId` and `TeleportDestinations.OpenWorld.
 - Default scene: Fire Pit
 - Auto shift to Black Fog after 10 seconds idle
 - Boss Clash scene triggers on Continue (Campaign) click before teleport
+- Settings panel includes `Hover Scene Switching` toggle
 - Camera anchors are Workspace parts:
   - `MenuCam_A_FirePit` / `MenuLookAt_A_FirePit`
   - `MenuCam_B_Fog` / `MenuLookAt_B_Fog`

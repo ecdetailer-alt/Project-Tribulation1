@@ -1,6 +1,9 @@
 local MenuConfig = {
 	GameName = "Tribulation",
 	MaxPartySize = 4,
+	Settings = {
+		HoverSceneSwitching = true,
+	},
 	Cinematics = {
 		DefaultScene = "FirePit",
 		IdleShiftScene = "BlackFogHorizon",

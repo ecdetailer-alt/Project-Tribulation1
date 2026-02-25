@@ -19,6 +19,9 @@
     "StarterGui": {
       "$path": "src/StarterGui"
     },
+    "Lighting": {
+      "$path": "src/Lighting"
+    },
     "Workspace": {
       "$path": "src/Workspace"
     }

@@ -11,6 +11,12 @@ for _, action in ipairs(MenuActions) do
 	actionById[action.Id] = action
 end
 
+local function cloneSettings(settings)
+	return {
+		HoverSceneSwitching = settings.HoverSceneSwitching == true,
+	}
+end
+
 function MenuController.new(signalBus)
 	local self = setmetatable({}, MenuController)
 	self._signalBus = signalBus
@@ -21,6 +27,9 @@ function MenuController.new(signalBus)
 	self._idleSeconds = 0
 	self._hasShiftedToIdleScene = false
 	self._isTransitioningPlay = false
+	self._settings = {
+		HoverSceneSwitching = MenuConfig.Settings.HoverSceneSwitching == true,
+	}
 	return self
 end
 
@@ -33,11 +42,16 @@ function MenuController:Start()
 		self:_handleMenuHover(payload)
 	end))
 
+	table.insert(self._connections, self._signalBus:Connect("MenuSettingChanged", function(payload)
+		self:_handleSettingChanged(payload)
+	end))
+
 	table.insert(self._connections, RunService.Heartbeat:Connect(function(dt)
 		self:_updateIdle(dt)
 	end))
 
 	self:_setScene(MenuConfig.Cinematics.DefaultScene)
+	self._signalBus:Fire("MenuSettingsUpdated", cloneSettings(self._settings))
 
 	self._signalBus:Fire("MenuStatus", {
 		Text = "Tribulation menu online.",
@@ -109,6 +123,10 @@ function MenuController:_handleMenuAction(payload)
 end
 
 function MenuController:_handleMenuHover(payload)
+	if not self._settings.HoverSceneSwitching then
+		return
+	end
+
 	local actionId = payload and payload.ActionId
 	if type(actionId) ~= "string" then
 		return
@@ -124,6 +142,40 @@ function MenuController:_handleMenuHover(payload)
 	if actionId == "OpenWorld" or actionId == "Character" then
 		self:_setScene("FirePit")
 		return
+	end
+end
+
+function MenuController:_handleSettingChanged(payload)
+	local key = payload and payload.Key
+	if key ~= "HoverSceneSwitching" then
+		return
+	end
+
+	local value = payload.Value == true
+	if self._settings.HoverSceneSwitching == value then
+		return
+	end
+
+	self._settings.HoverSceneSwitching = value
+	self._signalBus:Fire("MenuSettingsUpdated", cloneSettings(self._settings))
+
+	if value then
+		self._signalBus:Fire("MenuStatus", {
+			Text = "Hover scene switching enabled.",
+			IsError = false,
+		})
+		return
+	end
+
+	self._signalBus:Fire("MenuStatus", {
+		Text = "Hover scene switching disabled.",
+		IsError = false,
+	})
+
+	if self._activePanel == "Party" then
+		self:_setScene("BlackFogHorizon")
+	else
+		self:_setScene(MenuConfig.Cinematics.DefaultScene)
 	end
 end
 

@@ -1,8 +1,22 @@
 {
-  "ClassName": "Part",
-  "Properties": {
-    "Anchored": true,
-    "Size": [512, 10, 512],
-    "Position": [0, -5, 0]
-  }
+    "ClassName":  "Part",
+    "Properties":  {
+                       "Anchored":  true,
+                       "Size":  [
+                                    512,
+                                    10,
+                                    512
+                                ],
+                       "Position":  [
+                                        0,
+                                        -5,
+                                        0
+                                    ],
+                       "Material":  "Concrete",
+                       "Color":  [
+                                     0.08,
+                                     0.1,
+                                     0.12
+                                 ]
+                   }
 }

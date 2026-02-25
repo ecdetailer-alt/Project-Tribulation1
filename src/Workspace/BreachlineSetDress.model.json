@@ -1,0 +1,102 @@
+{
+  "ClassName": "Model",
+  "Children": [
+    {
+      "ClassName": "Part",
+      "Name": "HelipadStripe_A",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Material": "Neon",
+        "Color": [0.38, 0.84, 0.86],
+        "Transparency": 0.82,
+        "Size": [40, 0.2, 4],
+        "Position": [0, 4.11, 20]
+      }
+    },
+    {
+      "ClassName": "Part",
+      "Name": "HelipadStripe_B",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Material": "Neon",
+        "Color": [0.95, 0.67, 0.31],
+        "Transparency": 0.86,
+        "Size": [4, 0.2, 40],
+        "Position": [0, 4.12, 20]
+      }
+    },
+    {
+      "ClassName": "Part",
+      "Name": "BrokenAntennaBase",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Material": "Metal",
+        "Color": [0.26, 0.28, 0.31],
+        "Size": [4, 2, 4],
+        "Position": [18, 3.5, 28]
+      }
+    },
+    {
+      "ClassName": "Model",
+      "Name": "DebrisCluster",
+      "Children": [
+        {
+          "ClassName": "Part",
+          "Name": "Debris_A",
+          "Properties": {
+            "Anchored": true,
+            "CanCollide": true,
+            "Material": "Concrete",
+            "Color": [0.23, 0.24, 0.27],
+            "Size": [3, 1, 2],
+            "Position": [-13, 3.2, 24]
+          }
+        },
+        {
+          "ClassName": "Part",
+          "Name": "Debris_B",
+          "Properties": {
+            "Anchored": true,
+            "CanCollide": true,
+            "Material": "Metal",
+            "Color": [0.3, 0.25, 0.2],
+            "Size": [2.4, 0.8, 3.2],
+            "Position": [-11, 3, 22]
+          }
+        }
+      ]
+    },
+    {
+      "ClassName": "Part",
+      "Name": "AshVortexAnchor",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Transparency": 1,
+        "Size": [2, 2, 2],
+        "Position": [0, 8, 54]
+      },
+      "Children": [
+        {
+          "ClassName": "Attachment",
+          "Name": "AshAttachment",
+          "Children": [
+            {
+              "ClassName": "ParticleEmitter",
+              "Name": "AshEmitter",
+              "Properties": {
+                "Enabled": true,
+                "Rate": 18,
+                "LightInfluence": 0,
+                "LightEmission": 0.2
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

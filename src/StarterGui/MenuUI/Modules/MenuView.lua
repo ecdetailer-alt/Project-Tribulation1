@@ -88,6 +88,7 @@ function MenuView.new(playerGui, actions)
 	self._scanlines = {}
 	self._animationTime = 0
 	self._partyWidgets = nil
+	self._settingsWidgets = nil
 	self._characterViewport = nil
 	self._statusLabel = nil
 	self._sceneLabel = nil
@@ -348,19 +349,58 @@ function MenuView.new(playerGui, actions)
 	}, characterCard)
 
 	local settingsPanel, settingsCard = createPanel(detailHost, "Settings", "Settings")
-	create("TextLabel", {
+	local settingsInfo = create("TextLabel", {
 		Name = "SettingsInfo",
 		BackgroundTransparency = 1,
 		Position = UDim2.fromOffset(14, 36),
-		Size = UDim2.new(1, -28, 0, 72),
+		Size = UDim2.new(1, -28, 0, 46),
 		Font = MenuTheme.Typography.Body,
-		Text = "Settings scaffold is ready for graphics, audio, and controls.",
+		Text = "Control how menu interactions affect scene switching.",
 		TextColor3 = MenuTheme.Colors.SecondaryText,
-		TextSize = 14,
+		TextSize = 13,
 		TextWrapped = true,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextYAlignment = Enum.TextYAlignment.Top,
 	}, settingsCard)
+	settingsInfo.RichText = false
+
+	create("TextLabel", {
+		Name = "HoverSceneSwitchingLabel",
+		BackgroundTransparency = 1,
+		Position = UDim2.fromOffset(14, 82),
+		Size = UDim2.new(1, -150, 0, 22),
+		Font = MenuTheme.Typography.Body,
+		Text = "Hover Scene Switching",
+		TextColor3 = MenuTheme.Colors.PrimaryText,
+		TextSize = 14,
+		TextWrapped = false,
+		TextXAlignment = Enum.TextXAlignment.Left,
+	}, settingsCard)
+
+	local hoverToggleButton = createButton(settingsCard, "ON")
+	hoverToggleButton.Name = "HoverSceneSwitchingToggle"
+	hoverToggleButton.Position = UDim2.new(1, -116, 0, 78)
+	hoverToggleButton.Size = UDim2.fromOffset(102, 28)
+	hoverToggleButton.TextSize = 13
+
+	local settingsHint = create("TextLabel", {
+		Name = "SettingsHint",
+		BackgroundTransparency = 1,
+		Position = UDim2.fromOffset(14, 112),
+		Size = UDim2.new(1, -28, 0, 46),
+		Font = MenuTheme.Typography.Body,
+		Text = "When enabled, hovering main buttons previews scene mood.",
+		TextColor3 = MenuTheme.Colors.SecondaryText,
+		TextSize = 12,
+		TextWrapped = true,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextYAlignment = Enum.TextYAlignment.Top,
+	}, settingsCard)
+
+	self._settingsWidgets = {
+		HoverSceneSwitchingToggle = hoverToggleButton,
+		HintLabel = settingsHint,
+	}
 
 	self._panels.Party = partyPanel
 	self._panels.Character = characterPanel
@@ -454,6 +494,19 @@ function MenuView:BindPartyActions(handlers)
 	end))
 end
 
+function MenuView:BindSettingsActions(handlers)
+	local widgets = self._settingsWidgets
+	if not widgets then
+		return
+	end
+
+	table.insert(self._connections, widgets.HoverSceneSwitchingToggle.Activated:Connect(function()
+		if handlers.OnToggleHoverSceneSwitching then
+			handlers.OnToggleHoverSceneSwitching()
+		end
+	end))
+end
+
 function MenuView:SetPanel(panelId)
 	for id, panel in pairs(self._panels) do
 		panel.Visible = panelId == id
@@ -477,6 +530,21 @@ function MenuView:SetStatus(text, isError)
 
 	self._statusLabel.Text = text or ""
 	self._statusLabel.TextColor3 = isError and MenuTheme.Colors.Warning or MenuTheme.Colors.StatusGood
+end
+
+function MenuView:SetSettings(settings)
+	local widgets = self._settingsWidgets
+	if not widgets then
+		return
+	end
+
+	local hoverEnabled = settings and settings.HoverSceneSwitching == true
+	widgets.HoverSceneSwitchingToggle.Text = hoverEnabled and "ON" or "OFF"
+	widgets.HoverSceneSwitchingToggle.BackgroundColor3 = hoverEnabled and MenuTheme.Colors.ButtonAccent or MenuTheme.Colors.Button
+	widgets.HoverSceneSwitchingToggle.TextColor3 = hoverEnabled and Color3.fromRGB(13, 18, 23) or MenuTheme.Colors.PrimaryText
+	widgets.HintLabel.Text = hoverEnabled
+		and "When enabled, hovering main buttons previews scene mood."
+		or "Hover scene changes are disabled. Scene changes only on idle/click actions."
 end
 
 function MenuView:SetPartyState(state)

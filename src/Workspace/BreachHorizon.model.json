@@ -5,6 +5,39 @@
     "CanCollide": false,
     "Transparency": 0.3,
     "Size": [520, 220, 40],
-    "Position": [0, 108, 392]
-  }
+    "Position": [0, 108, 392],
+    "Color": [0.4, 0.2, 0.12],
+    "Material": "ForceField",
+    "CastShadow": false
+  },
+  "Children": [
+    {
+      "ClassName": "Attachment",
+      "Name": "BreachCoreAttachment",
+      "Properties": {
+        "Position": [0, 8, 0]
+      },
+      "Children": [
+        {
+          "ClassName": "ParticleEmitter",
+          "Name": "BreachDustEmitter",
+          "Properties": {
+            "Enabled": true,
+            "Rate": 24,
+            "LightEmission": 0.6
+          }
+        }
+      ]
+    },
+    {
+      "ClassName": "PointLight",
+      "Name": "BreachGlow",
+      "Properties": {
+        "Brightness": 1.9,
+        "Range": 220,
+        "Color": [0.88, 0.44, 0.24],
+        "Shadows": false
+      }
+    }
+  ]
 }

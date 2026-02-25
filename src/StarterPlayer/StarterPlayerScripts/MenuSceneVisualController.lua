@@ -14,6 +14,22 @@ local function scaleVector3(v, sx, sy, sz)
 	return Vector3.new(v.X * sx, v.Y * sy, v.Z * sz)
 end
 
+local function getOrCreateEffect(className, name)
+	local existing = Lighting:FindFirstChild(name)
+	if existing and existing:IsA(className) then
+		return existing, false
+	end
+
+	if existing then
+		existing:Destroy()
+	end
+
+	local created = Instance.new(className)
+	created.Name = name
+	created.Parent = Lighting
+	return created, true
+end
+
 function MenuSceneVisualController.new()
 	local self = setmetatable({}, MenuSceneVisualController)
 	self._signalBus = SignalBus.getShared()
@@ -24,24 +40,65 @@ function MenuSceneVisualController.new()
 	self._bossSequenceRunning = false
 	self._heartbeatTimer = 0
 	self._nextHeartbeat = math.random(32, 38)
+	self._lightingState = nil
+	self._createdEffects = {}
 
 	self._parts = {
 		FirePitCore = Workspace:FindFirstChild("FirePitCore"),
 		FogSheet = Workspace:FindFirstChild("FogSheet"),
 		DomeField = Workspace:FindFirstChild("DomeField"),
 		DomePulseRing = Workspace:FindFirstChild("DomePulseRing"),
+		BreachHorizon = Workspace:FindFirstChild("BreachHorizon"),
 		BossSilhouette = Workspace:FindFirstChild("BossSilhouette"),
 		TurretLine = Workspace:FindFirstChild("TurretLine"),
 		ImpactMarker = Workspace:FindFirstChild("ImpactMarker"),
 		CommsBeacon = Workspace:FindFirstChild("CommsBeacon"),
 	}
-	self._atmosphere = nil
-	self._colorCorrection = nil
-	self._bloom = nil
-	self._createdAtmosphere = false
-	self._createdColorCorrection = false
-	self._createdBloom = false
-	self._lightingState = nil
+
+	local impactRig = Workspace:FindFirstChild("DomeImpactRig")
+	local impactAnchor = impactRig and impactRig:FindFirstChild("ImpactSparkAnchor")
+	self._lights = {
+		FireGlow = self._parts.FirePitCore and self._parts.FirePitCore:FindFirstChild("FireGlow"),
+		DomeGlow = self._parts.DomeField and self._parts.DomeField:FindFirstChild("DomeGlow"),
+		BreachGlow = self._parts.BreachHorizon and self._parts.BreachHorizon:FindFirstChild("BreachGlow"),
+		BeaconPulse = self._parts.CommsBeacon and self._parts.CommsBeacon:FindFirstChild("BeaconPulse"),
+		ImpactPulse = impactAnchor and impactAnchor:FindFirstChild("ImpactPulseLight"),
+	}
+	self._effectsParts = {
+		Fire = self._parts.FirePitCore and self._parts.FirePitCore:FindFirstChild("CoreFire"),
+		FireEmbers = self._parts.FirePitCore
+			and self._parts.FirePitCore:FindFirstChild("FireAttachment")
+			and self._parts.FirePitCore.FireAttachment:FindFirstChild("EmberEmitter"),
+		BreachDust = self._parts.BreachHorizon
+			and self._parts.BreachHorizon:FindFirstChild("BreachCoreAttachment")
+			and self._parts.BreachHorizon.BreachCoreAttachment:FindFirstChild("BreachDustEmitter"),
+		ImpactSparks = impactAnchor
+			and impactAnchor:FindFirstChild("SparkAttachment")
+			and impactAnchor.SparkAttachment:FindFirstChild("ImpactSparks"),
+	}
+
+	local atmosphere, createdAtmosphere = getOrCreateEffect("Atmosphere", "TribulationAtmosphere")
+	local colorCorrection, createdColor = getOrCreateEffect("ColorCorrectionEffect", "TribulationColor")
+	local bloom, createdBloom = getOrCreateEffect("BloomEffect", "TribulationBloom")
+	local depthOfField, createdDof = getOrCreateEffect("DepthOfFieldEffect", "TribulationDepthOfField")
+	local sunRays, createdSunRays = getOrCreateEffect("SunRaysEffect", "TribulationSunRays")
+	local blur, createdBlur = getOrCreateEffect("BlurEffect", "TribulationBlur")
+
+	self._effects = {
+		Atmosphere = atmosphere,
+		ColorCorrection = colorCorrection,
+		Bloom = bloom,
+		DepthOfField = depthOfField,
+		SunRays = sunRays,
+		Blur = blur,
+	}
+
+	self._createdEffects.TribulationAtmosphere = createdAtmosphere
+	self._createdEffects.TribulationColor = createdColor
+	self._createdEffects.TribulationBloom = createdBloom
+	self._createdEffects.TribulationDepthOfField = createdDof
+	self._createdEffects.TribulationSunRays = createdSunRays
+	self._createdEffects.TribulationBlur = createdBlur
 
 	self._baseSizes = {}
 	for partName, part in pairs(self._parts) do
@@ -53,161 +110,29 @@ function MenuSceneVisualController.new()
 	return self
 end
 
-function MenuSceneVisualController:_applyLightingProfile()
-	if not self._lightingState then
-		self._lightingState = {
-			Brightness = Lighting.Brightness,
-			ClockTime = Lighting.ClockTime,
-			Ambient = Lighting.Ambient,
-			OutdoorAmbient = Lighting.OutdoorAmbient,
-			EnvironmentDiffuseScale = Lighting.EnvironmentDiffuseScale,
-			EnvironmentSpecularScale = Lighting.EnvironmentSpecularScale,
-		}
+function MenuSceneVisualController:_captureLightingState()
+	if self._lightingState then
+		return
 	end
 
-	Lighting.Brightness = 1.6
-	Lighting.ClockTime = 0
-	Lighting.Ambient = Color3.fromRGB(20, 26, 31)
-	Lighting.OutdoorAmbient = Color3.fromRGB(8, 10, 14)
-	Lighting.EnvironmentDiffuseScale = 0.32
-	Lighting.EnvironmentSpecularScale = 0.42
-
-	local atmosphere = Lighting:FindFirstChild("TribulationMenuAtmosphere")
-	if not atmosphere then
-		atmosphere = Instance.new("Atmosphere")
-		atmosphere.Name = "TribulationMenuAtmosphere"
-		atmosphere.Parent = Lighting
-		self._createdAtmosphere = true
-	end
-	atmosphere.Color = Color3.fromRGB(88, 102, 116)
-	atmosphere.Decay = Color3.fromRGB(53, 62, 74)
-	atmosphere.Density = 0.39
-	atmosphere.Glare = 0.08
-	atmosphere.Haze = 1.15
-	self._atmosphere = atmosphere
-
-	local colorCorrection = Lighting:FindFirstChild("TribulationMenuColor")
-	if not colorCorrection then
-		colorCorrection = Instance.new("ColorCorrectionEffect")
-		colorCorrection.Name = "TribulationMenuColor"
-		colorCorrection.Parent = Lighting
-		self._createdColorCorrection = true
-	end
-	colorCorrection.Brightness = -0.03
-	colorCorrection.Contrast = 0.07
-	colorCorrection.Saturation = -0.22
-	colorCorrection.TintColor = Color3.fromRGB(189, 206, 220)
-	self._colorCorrection = colorCorrection
-
-	local bloom = Lighting:FindFirstChild("TribulationMenuBloom")
-	if not bloom then
-		bloom = Instance.new("BloomEffect")
-		bloom.Name = "TribulationMenuBloom"
-		bloom.Parent = Lighting
-		self._createdBloom = true
-	end
-	bloom.Intensity = 0.18
-	bloom.Threshold = 1.35
-	bloom.Size = 22
-	self._bloom = bloom
+	self._lightingState = {
+		Brightness = Lighting.Brightness,
+		ClockTime = Lighting.ClockTime,
+		Ambient = Lighting.Ambient,
+		OutdoorAmbient = Lighting.OutdoorAmbient,
+		EnvironmentDiffuseScale = Lighting.EnvironmentDiffuseScale,
+		EnvironmentSpecularScale = Lighting.EnvironmentSpecularScale,
+	}
 end
 
-function MenuSceneVisualController:_applyStaticStyle()
-	local function style(partName, properties)
-		local part = self._parts[partName]
-		if not part or not part:IsA("BasePart") then
-			return
-		end
-
-		for propertyName, value in pairs(properties) do
-			part[propertyName] = value
-		end
-	end
-
-	style("FirePitCore", {
-		Color = Color3.fromRGB(255, 133, 62),
-		Material = Enum.Material.Neon,
-	})
-
-	style("FogSheet", {
-		Color = Color3.fromRGB(63, 75, 86),
-		Material = Enum.Material.ForceField,
-	})
-
-	style("DomeField", {
-		Color = Color3.fromRGB(84, 147, 162),
-		Material = Enum.Material.ForceField,
-	})
-
-	style("DomePulseRing", {
-		Color = Color3.fromRGB(118, 206, 223),
-		Material = Enum.Material.Neon,
-	})
-
-	style("BossSilhouette", {
-		Color = Color3.fromRGB(10, 14, 17),
-		Material = Enum.Material.SmoothPlastic,
-	})
-
-	style("TurretLine", {
-		Color = Color3.fromRGB(255, 187, 95),
-		Material = Enum.Material.Neon,
-	})
-
-	style("ImpactMarker", {
-		Color = Color3.fromRGB(167, 228, 255),
-		Material = Enum.Material.Neon,
-	})
-
-	style("CommsBeacon", {
-		Color = Color3.fromRGB(224, 79, 64),
-		Material = Enum.Material.Neon,
-	})
-
-	local baseplate = Workspace:FindFirstChild("Baseplate")
-	if baseplate and baseplate:IsA("BasePart") then
-		baseplate.Color = Color3.fromRGB(21, 26, 30)
-		baseplate.Material = Enum.Material.Concrete
-	end
-
-	local deck = Workspace:FindFirstChild("BreachlineDeck")
-	if deck and deck:IsA("BasePart") then
-		deck.Color = Color3.fromRGB(35, 42, 49)
-		deck.Material = Enum.Material.Metal
-	end
-
-	for _, partName in ipairs({
-		"DeckRail_North",
-		"DeckRail_East",
-		"DeckRail_West",
-		"CommsTower",
-		"Floodlight_A",
-		"Floodlight_B",
-		"Floodlight_C",
-		"Crate_A",
-		"Crate_B",
-		"ToppledAntenna",
-	}) do
-		local part = Workspace:FindFirstChild(partName)
-		if part and part:IsA("BasePart") then
-			part.Color = Color3.fromRGB(48, 57, 66)
-			part.Material = Enum.Material.Metal
-		end
-	end
-
-	for _, partName in ipairs({ "CityBlock_A", "CityBlock_B", "CityBlock_C" }) do
-		local part = Workspace:FindFirstChild(partName)
-		if part and part:IsA("BasePart") then
-			part.Color = Color3.fromRGB(28, 34, 41)
-			part.Material = Enum.Material.SmoothPlastic
-		end
-	end
-
-	local breach = Workspace:FindFirstChild("BreachHorizon")
-	if breach and breach:IsA("BasePart") then
-		breach.Color = Color3.fromRGB(73, 42, 28)
-		breach.Material = Enum.Material.ForceField
-	end
+function MenuSceneVisualController:_applyBaseLighting()
+	self:_captureLightingState()
+	Lighting.Brightness = 1.7
+	Lighting.ClockTime = 0.1
+	Lighting.Ambient = Color3.fromRGB(18, 22, 29)
+	Lighting.OutdoorAmbient = Color3.fromRGB(8, 10, 14)
+	Lighting.EnvironmentDiffuseScale = 0.27
+	Lighting.EnvironmentSpecularScale = 0.44
 end
 
 function MenuSceneVisualController:_setPartTransparency(partName, value)
@@ -217,47 +142,216 @@ function MenuSceneVisualController:_setPartTransparency(partName, value)
 	end
 end
 
-function MenuSceneVisualController:_setSceneVisualState(sceneId)
-	self._sceneId = sceneId
+function MenuSceneVisualController:_applySceneShaders(sceneId)
+	local atmosphere = self._effects.Atmosphere
+	local color = self._effects.ColorCorrection
+	local bloom = self._effects.Bloom
+	local dof = self._effects.DepthOfField
+	local sunRays = self._effects.SunRays
+	local blur = self._effects.Blur
 
 	if sceneId == "FirePit" then
-		self:_setPartTransparency("FirePitCore", 0.18)
+		if atmosphere then
+			atmosphere.Density = 0.42
+			atmosphere.Haze = 1.1
+			atmosphere.Glare = 0.08
+			atmosphere.Color = Color3.fromRGB(103, 112, 124)
+			atmosphere.Decay = Color3.fromRGB(66, 53, 44)
+		end
+		if color then
+			color.Brightness = -0.05
+			color.Contrast = 0.11
+			color.Saturation = -0.14
+			color.TintColor = Color3.fromRGB(220, 199, 178)
+		end
+		if bloom then
+			bloom.Intensity = 0.24
+			bloom.Threshold = 1.15
+			bloom.Size = 26
+		end
+		if dof then
+			dof.FocusDistance = 88
+			dof.InFocusRadius = 42
+			dof.NearIntensity = 0.06
+			dof.FarIntensity = 0.16
+		end
+		if sunRays then
+			sunRays.Intensity = 0.035
+			sunRays.Spread = 0.24
+		end
+		if blur then
+			blur.Size = 1.1
+		end
+		return
+	end
+
+	if sceneId == "BlackFogHorizon" then
+		if atmosphere then
+			atmosphere.Density = 0.55
+			atmosphere.Haze = 1.65
+			atmosphere.Glare = 0.04
+			atmosphere.Color = Color3.fromRGB(86, 106, 126)
+			atmosphere.Decay = Color3.fromRGB(48, 61, 77)
+		end
+		if color then
+			color.Brightness = -0.08
+			color.Contrast = 0.16
+			color.Saturation = -0.28
+			color.TintColor = Color3.fromRGB(166, 192, 224)
+		end
+		if bloom then
+			bloom.Intensity = 0.14
+			bloom.Threshold = 1.34
+			bloom.Size = 20
+		end
+		if dof then
+			dof.FocusDistance = 116
+			dof.InFocusRadius = 30
+			dof.NearIntensity = 0.1
+			dof.FarIntensity = 0.25
+		end
+		if sunRays then
+			sunRays.Intensity = 0.02
+			sunRays.Spread = 0.18
+		end
+		if blur then
+			blur.Size = 2.4
+		end
+		return
+	end
+
+	if sceneId == "BossClashFreezeFrame" then
+		if atmosphere then
+			atmosphere.Density = 0.46
+			atmosphere.Haze = 1.02
+			atmosphere.Glare = 0.11
+			atmosphere.Color = Color3.fromRGB(122, 112, 110)
+			atmosphere.Decay = Color3.fromRGB(82, 57, 48)
+		end
+		if color then
+			color.Brightness = -0.03
+			color.Contrast = 0.22
+			color.Saturation = -0.1
+			color.TintColor = Color3.fromRGB(238, 185, 146)
+		end
+		if bloom then
+			bloom.Intensity = 0.39
+			bloom.Threshold = 0.95
+			bloom.Size = 34
+		end
+		if dof then
+			dof.FocusDistance = 132
+			dof.InFocusRadius = 24
+			dof.NearIntensity = 0.12
+			dof.FarIntensity = 0.29
+		end
+		if sunRays then
+			sunRays.Intensity = 0.08
+			sunRays.Spread = 0.34
+		end
+		if blur then
+			blur.Size = 1.6
+		end
+	end
+end
+
+function MenuSceneVisualController:_setSceneVisualState(sceneId)
+	self._sceneId = sceneId
+	self:_applySceneShaders(sceneId)
+
+	local fireObject = self._effectsParts.Fire
+	local fireEmbers = self._effectsParts.FireEmbers
+	local breachDust = self._effectsParts.BreachDust
+	local impactSparks = self._effectsParts.ImpactSparks
+	local fireGlow = self._lights.FireGlow
+	local impactPulse = self._lights.ImpactPulse
+
+	if sceneId == "FirePit" then
+		self:_setPartTransparency("FirePitCore", 0.16)
 		self:_setPartTransparency("FogSheet", 0.86)
 		self:_setPartTransparency("BossSilhouette", 1)
 		self:_setPartTransparency("TurretLine", 1)
 		self:_setPartTransparency("ImpactMarker", 1)
-		self:_setPartTransparency("DomeField", 0.86)
+		self:_setPartTransparency("DomeField", 0.82)
 		self:_setPartTransparency("DomePulseRing", 1)
-		if self._colorCorrection then
-			self._colorCorrection.TintColor = Color3.fromRGB(201, 195, 182)
-			self._colorCorrection.Contrast = 0.08
+		if fireObject and fireObject:IsA("Fire") then
+			fireObject.Enabled = true
+		end
+		if fireEmbers and fireEmbers:IsA("ParticleEmitter") then
+			fireEmbers.Enabled = true
+			fireEmbers.Rate = 14
+		end
+		if breachDust and breachDust:IsA("ParticleEmitter") then
+			breachDust.Rate = 14
+		end
+		if fireGlow and fireGlow:IsA("PointLight") then
+			fireGlow.Brightness = 3.1
+		end
+		if impactSparks and impactSparks:IsA("ParticleEmitter") then
+			impactSparks.Rate = 4
+		end
+		if impactPulse and impactPulse:IsA("PointLight") then
+			impactPulse.Brightness = 0.6
 		end
 		return
 	end
 
 	if sceneId == "BlackFogHorizon" then
 		self:_setPartTransparency("FirePitCore", 0.96)
-		self:_setPartTransparency("FogSheet", 0.7)
+		self:_setPartTransparency("FogSheet", 0.64)
 		self:_setPartTransparency("BossSilhouette", 1)
 		self:_setPartTransparency("TurretLine", 1)
 		self:_setPartTransparency("ImpactMarker", 1)
-		self:_setPartTransparency("DomeField", 0.78)
+		self:_setPartTransparency("DomeField", 0.72)
 		self:_setPartTransparency("DomePulseRing", 1)
-		if self._colorCorrection then
-			self._colorCorrection.TintColor = Color3.fromRGB(170, 196, 218)
-			self._colorCorrection.Contrast = 0.13
+		if fireObject and fireObject:IsA("Fire") then
+			fireObject.Enabled = false
+		end
+		if fireEmbers and fireEmbers:IsA("ParticleEmitter") then
+			fireEmbers.Enabled = false
+		end
+		if breachDust and breachDust:IsA("ParticleEmitter") then
+			breachDust.Enabled = true
+			breachDust.Rate = 28
+		end
+		if fireGlow and fireGlow:IsA("PointLight") then
+			fireGlow.Brightness = 0.4
+		end
+		if impactSparks and impactSparks:IsA("ParticleEmitter") then
+			impactSparks.Rate = 7
+		end
+		if impactPulse and impactPulse:IsA("PointLight") then
+			impactPulse.Brightness = 1.2
 		end
 		return
 	end
 
 	if sceneId == "BossClashFreezeFrame" then
-		self:_setPartTransparency("FirePitCore", 0.9)
+		self:_setPartTransparency("FirePitCore", 0.92)
 		self:_setPartTransparency("FogSheet", 0.76)
-		self:_setPartTransparency("BossSilhouette", 0.37)
-		self:_setPartTransparency("DomeField", 0.72)
-		if self._colorCorrection then
-			self._colorCorrection.TintColor = Color3.fromRGB(228, 183, 151)
-			self._colorCorrection.Contrast = 0.17
+		self:_setPartTransparency("BossSilhouette", 0.22)
+		self:_setPartTransparency("TurretLine", 0.84)
+		self:_setPartTransparency("ImpactMarker", 1)
+		self:_setPartTransparency("DomeField", 0.63)
+		self:_setPartTransparency("DomePulseRing", 1)
+		if fireObject and fireObject:IsA("Fire") then
+			fireObject.Enabled = false
+		end
+		if fireEmbers and fireEmbers:IsA("ParticleEmitter") then
+			fireEmbers.Enabled = false
+		end
+		if breachDust and breachDust:IsA("ParticleEmitter") then
+			breachDust.Enabled = true
+			breachDust.Rate = 34
+		end
+		if fireGlow and fireGlow:IsA("PointLight") then
+			fireGlow.Brightness = 0.3
+		end
+		if impactSparks and impactSparks:IsA("ParticleEmitter") then
+			impactSparks.Rate = 12
+		end
+		if impactPulse and impactPulse:IsA("PointLight") then
+			impactPulse.Brightness = 1.9
 		end
 		self:_playBossSequence()
 	end
@@ -274,37 +368,34 @@ function MenuSceneVisualController:_playBossSequence()
 		local turret = self._parts.TurretLine
 		local impact = self._parts.ImpactMarker
 		if turret and turret:IsA("BasePart") then
-			turret.Transparency = 0.5
+			turret.Transparency = 0.43
 		end
 
 		task.wait(0.9)
 		self._signalBus:Fire("MenuLightningStrike", {
-			Magnitude = 0.45,
+			Magnitude = 0.48,
 			Duration = 0.33,
 		})
+
 		if impact and impact:IsA("BasePart") then
-			impact.Transparency = 0.06
+			impact.Transparency = 0.05
 			local tweenOut = TweenService:Create(impact, TweenInfo.new(0.42, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 				Transparency = 1,
-				Size = self._baseSizes.ImpactMarker and (self._baseSizes.ImpactMarker * 1.35) or impact.Size,
+				Size = self._baseSizes.ImpactMarker and scaleVector3(self._baseSizes.ImpactMarker, 1.35, 1.35, 1) or impact.Size,
 			})
 			tweenOut:Play()
 		end
 
-		task.wait(0.7)
+		task.wait(0.72)
 		if turret and turret:IsA("BasePart") then
-			turret.Transparency = 0.74
+			turret.Transparency = 0.72
 		end
 
-		task.wait(1.8)
-		if self._sceneId ~= "BossClashFreezeFrame" then
-			self._bossSequenceRunning = false
-			return
+		task.wait(1.6)
+		if self._sceneId == "BossClashFreezeFrame" and turret and turret:IsA("BasePart") then
+			turret.Transparency = 0.84
 		end
 
-		if turret and turret:IsA("BasePart") then
-			turret.Transparency = 1
-		end
 		self._bossSequenceRunning = false
 	end)
 end
@@ -316,12 +407,12 @@ function MenuSceneVisualController:_heartbeatPulse()
 		return
 	end
 
-	local minTransparency = math.max(0.55, dome.Transparency - 0.14)
-	local tweenIn = TweenService:Create(dome, TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+	local minTransparency = math.max(0.48, dome.Transparency - 0.18)
+	local tweenIn = TweenService:Create(dome, TweenInfo.new(1.1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
 		Transparency = minTransparency,
 	})
-	local tweenOut = TweenService:Create(dome, TweenInfo.new(1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-		Transparency = math.clamp(minTransparency + 0.14, 0, 1),
+	local tweenOut = TweenService:Create(dome, TweenInfo.new(1.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+		Transparency = math.clamp(minTransparency + 0.18, 0, 1),
 	})
 
 	tweenIn:Play()
@@ -330,12 +421,12 @@ function MenuSceneVisualController:_heartbeatPulse()
 	end)
 
 	if ring and ring:IsA("BasePart") then
-		ring.Transparency = 0.2
+		ring.Transparency = 0.16
 		local originalSize = self._baseSizes.DomePulseRing or ring.Size
 		ring.Size = scaleVector3(originalSize, 0.94, 1, 0.94)
 		local ringTween = TweenService:Create(ring, TweenInfo.new(2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 			Transparency = 1,
-			Size = scaleVector3(originalSize, 1.08, 1, 1.08),
+			Size = scaleVector3(originalSize, 1.1, 1, 1.1),
 		})
 		ringTween:Play()
 	end
@@ -347,7 +438,11 @@ function MenuSceneVisualController:_update(dt)
 	local comms = self._parts.CommsBeacon
 	if comms and comms:IsA("BasePart") then
 		local blink = (math.sin(self._time * 3.4) + 1) * 0.5
-		comms.Transparency = 0.35 + blink * 0.5
+		comms.Transparency = 0.26 + blink * 0.62
+	end
+	local beaconPulse = self._lights.BeaconPulse
+	if beaconPulse and beaconPulse:IsA("PointLight") then
+		beaconPulse.Brightness = 1.2 + (math.sin(self._time * 3.4) + 1) * 1.2
 	end
 
 	local fog = self._parts.FogSheet
@@ -358,8 +453,20 @@ function MenuSceneVisualController:_update(dt)
 
 	local fire = self._parts.FirePitCore
 	if fire and fire:IsA("BasePart") and self._sceneId == "FirePit" then
-		local flicker = 0.12 + (math.sin(self._time * 7.2) + 1) * 0.08
+		local flicker = 0.08 + (math.sin(self._time * 7.2) + 1) * 0.08
 		fire.Transparency = flicker
+	end
+	local fireGlow = self._lights.FireGlow
+	if fireGlow and fireGlow:IsA("PointLight") and self._sceneId == "FirePit" then
+		fireGlow.Brightness = 2.5 + (math.sin(self._time * 9.1) + 1) * 0.8
+	end
+	local domeGlow = self._lights.DomeGlow
+	if domeGlow and domeGlow:IsA("PointLight") then
+		domeGlow.Brightness = 1 + (math.sin(self._time * 0.7) + 1) * 0.22
+	end
+	local breachGlow = self._lights.BreachGlow
+	if breachGlow and breachGlow:IsA("PointLight") then
+		breachGlow.Brightness = 1.2 + (math.sin(self._time * 1.3) + 1) * 0.35
 	end
 
 	self._heartbeatTimer += dt
@@ -376,8 +483,7 @@ function MenuSceneVisualController:Start()
 	end
 
 	self._started = true
-	self:_applyLightingProfile()
-	self:_applyStaticStyle()
+	self:_applyBaseLighting()
 	self:_setSceneVisualState("FirePit")
 
 	table.insert(self._connections, self._signalBus:Connect("MenuSceneSelected", function(payload)
@@ -398,6 +504,7 @@ function MenuSceneVisualController:Destroy()
 	end
 
 	self._started = false
+
 	for _, connection in ipairs(self._connections) do
 		connection:Disconnect()
 	end
@@ -412,14 +519,13 @@ function MenuSceneVisualController:Destroy()
 		Lighting.EnvironmentSpecularScale = self._lightingState.EnvironmentSpecularScale
 	end
 
-	if self._createdAtmosphere and self._atmosphere then
-		self._atmosphere:Destroy()
-	end
-	if self._createdColorCorrection and self._colorCorrection then
-		self._colorCorrection:Destroy()
-	end
-	if self._createdBloom and self._bloom then
-		self._bloom:Destroy()
+	for effectName, created in pairs(self._createdEffects) do
+		if created then
+			local effect = Lighting:FindFirstChild(effectName)
+			if effect then
+				effect:Destroy()
+			end
+		end
 	end
 end
 

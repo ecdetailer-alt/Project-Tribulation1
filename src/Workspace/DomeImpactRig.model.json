@@ -1,0 +1,43 @@
+{
+  "ClassName": "Model",
+  "Children": [
+    {
+      "ClassName": "Part",
+      "Name": "ImpactSparkAnchor",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Transparency": 1,
+        "Size": [2, 2, 2],
+        "Position": [0, 84, 158]
+      },
+      "Children": [
+        {
+          "ClassName": "Attachment",
+          "Name": "SparkAttachment",
+          "Children": [
+            {
+              "ClassName": "ParticleEmitter",
+              "Name": "ImpactSparks",
+              "Properties": {
+                "Enabled": true,
+                "Rate": 6,
+                "LightEmission": 0.85
+              }
+            }
+          ]
+        },
+        {
+          "ClassName": "PointLight",
+          "Name": "ImpactPulseLight",
+          "Properties": {
+            "Brightness": 2.6,
+            "Range": 28,
+            "Color": [0.64, 0.87, 1],
+            "Shadows": false
+          }
+        }
+      ]
+    }
+  ]
+}

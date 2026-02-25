@@ -5,6 +5,49 @@
     "CanCollide": false,
     "Transparency": 0.2,
     "Size": [3.5, 2.5, 3.5],
-    "Position": [-10, 4.2, 34]
-  }
+    "Position": [-10, 4.2, 34],
+    "Color": [1, 0.45, 0.2],
+    "Material": "Neon",
+    "CastShadow": false
+  },
+  "Children": [
+    {
+      "ClassName": "Attachment",
+      "Name": "FireAttachment",
+      "Properties": {
+        "Position": [0, 1, 0]
+      },
+      "Children": [
+        {
+          "ClassName": "ParticleEmitter",
+          "Name": "EmberEmitter",
+          "Properties": {
+            "Enabled": true,
+            "Rate": 12,
+            "LightEmission": 0.82
+          }
+        }
+      ]
+    },
+    {
+      "ClassName": "PointLight",
+      "Name": "FireGlow",
+      "Properties": {
+        "Brightness": 3.2,
+        "Range": 30,
+        "Color": [1, 0.54, 0.29],
+        "Shadows": true
+      }
+    },
+    {
+      "ClassName": "Fire",
+      "Name": "CoreFire",
+      "Properties": {
+        "Heat": 8,
+        "Size": 6,
+        "Color": [1, 0.50, 0.32],
+        "SecondaryColor": [1, 0.20, 0.09]
+      }
+    }
+  ]
 }

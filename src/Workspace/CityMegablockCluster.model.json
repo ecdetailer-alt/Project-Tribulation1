@@ -1,0 +1,65 @@
+{
+  "ClassName": "Model",
+  "Children": [
+    {
+      "ClassName": "Part",
+      "Name": "Tower_A",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Material": "SmoothPlastic",
+        "Color": [0.14, 0.16, 0.19],
+        "Size": [36, 120, 36],
+        "Position": [-124, 62, 260]
+      }
+    },
+    {
+      "ClassName": "Part",
+      "Name": "Tower_B",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Material": "SmoothPlastic",
+        "Color": [0.13, 0.15, 0.18],
+        "Size": [42, 154, 42],
+        "Position": [118, 79, 276]
+      }
+    },
+    {
+      "ClassName": "Part",
+      "Name": "Tower_C",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": true,
+        "Material": "SmoothPlastic",
+        "Color": [0.15, 0.17, 0.2],
+        "Size": [54, 98, 54],
+        "Position": [62, 51, 316]
+      }
+    },
+    {
+      "ClassName": "Part",
+      "Name": "CityWindowGlow",
+      "Properties": {
+        "Anchored": true,
+        "CanCollide": false,
+        "Material": "Neon",
+        "Color": [0.42, 0.74, 0.77],
+        "Transparency": 0.88,
+        "Size": [280, 42, 2],
+        "Position": [0, 62, 246]
+      },
+      "Children": [
+        {
+          "ClassName": "PointLight",
+          "Name": "WindowGlowLight",
+          "Properties": {
+            "Brightness": 1.2,
+            "Range": 180,
+            "Color": [0.42, 0.74, 0.77]
+          }
+        }
+      ]
+    }
+  ]
+}

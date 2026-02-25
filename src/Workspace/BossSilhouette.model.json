@@ -5,6 +5,28 @@
     "CanCollide": false,
     "Transparency": 1,
     "Size": [48, 108, 16],
-    "Position": [18, 84, 334]
-  }
+    "Position": [18, 84, 334],
+    "Color": [0.04, 0.05, 0.06],
+    "Material": "SmoothPlastic",
+    "CastShadow": false
+  },
+  "Children": [
+    {
+      "ClassName": "Attachment",
+      "Name": "BossCoreAttachment",
+      "Properties": {
+        "Position": [0, 34, 0]
+      }
+    },
+    {
+      "ClassName": "PointLight",
+      "Name": "BackRimLight",
+      "Properties": {
+        "Brightness": 0.8,
+        "Range": 70,
+        "Color": [0.58, 0.72, 0.92],
+        "Shadows": false
+      }
+    }
+  ]
 }

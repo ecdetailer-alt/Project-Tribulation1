@@ -5,6 +5,28 @@
     "CanCollide": false,
     "Transparency": 0.84,
     "Size": [420, 180, 12],
-    "Position": [0, 90, 164]
-  }
+    "Position": [0, 90, 164],
+    "Color": [0.32, 0.57, 0.63],
+    "Material": "ForceField",
+    "CastShadow": false
+  },
+  "Children": [
+    {
+      "ClassName": "Attachment",
+      "Name": "DomeCoreAttachment",
+      "Properties": {
+        "Position": [0, 0, 0]
+      }
+    },
+    {
+      "ClassName": "PointLight",
+      "Name": "DomeGlow",
+      "Properties": {
+        "Brightness": 1.4,
+        "Range": 180,
+        "Color": [0.36, 0.76, 0.84],
+        "Shadows": false
+      }
+    }
+  ]
 }

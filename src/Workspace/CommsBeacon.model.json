@@ -5,6 +5,24 @@
     "CanCollide": false,
     "Transparency": 0.42,
     "Size": [1.4, 1.4, 1.4],
-    "Position": [-78, 48.5, -14]
-  }
+    "Position": [-78, 48.5, -14],
+    "Material": "Neon",
+    "Color": [0.88, 0.24, 0.2]
+  },
+  "Children": [
+    {
+      "ClassName": "PointLight",
+      "Name": "BeaconPulse",
+      "Properties": {
+        "Brightness": 2.1,
+        "Range": 24,
+        "Color": [0.95, 0.28, 0.24],
+        "Shadows": false
+      }
+    },
+    {
+      "ClassName": "Attachment",
+      "Name": "BeaconAttachment"
+    }
+  ]
 }
