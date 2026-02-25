@@ -1,0 +1,43 @@
+local CameraScenes = {
+	FirePit = {
+		Id = "FirePit",
+		DisplayName = "Fire Pit Scene",
+		StartPosition = Vector3.new(0, 14, -44),
+		EndPosition = Vector3.new(8, 11, -30),
+		LookAtStart = Vector3.new(0, 3, 0),
+		LookAtEnd = Vector3.new(2, 4, 0),
+		PanDuration = 24,
+		Fov = 62,
+		SwayAmplitude = Vector3.new(0.22, 0.14, 0),
+		SwayFrequency = 0.55,
+		ShakeScale = 0.4,
+	},
+	BlackFogHorizon = {
+		Id = "BlackFogHorizon",
+		DisplayName = "Black Fog Horizon Scene",
+		StartPosition = Vector3.new(-26, 18, -64),
+		EndPosition = Vector3.new(-12, 13, -42),
+		LookAtStart = Vector3.new(-4, 6, -8),
+		LookAtEnd = Vector3.new(4, 7, -10),
+		PanDuration = 30,
+		Fov = 58,
+		SwayAmplitude = Vector3.new(0.16, 0.1, 0),
+		SwayFrequency = 0.38,
+		ShakeScale = 0.25,
+	},
+	BossClashFreezeFrame = {
+		Id = "BossClashFreezeFrame",
+		DisplayName = "Boss Clash Freeze Frame Scene",
+		StartPosition = Vector3.new(28, 16, -34),
+		EndPosition = Vector3.new(22, 14, -29),
+		LookAtStart = Vector3.new(0, 6, 0),
+		LookAtEnd = Vector3.new(0, 6, 0),
+		PanDuration = 14,
+		Fov = 50,
+		SwayAmplitude = Vector3.new(0.1, 0.05, 0),
+		SwayFrequency = 0.22,
+		ShakeScale = 0.85,
+	},
+}
+
+return CameraScenes
