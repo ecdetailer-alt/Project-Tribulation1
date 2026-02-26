@@ -11,9 +11,11 @@
 - Scene visual controller: `src/StarterPlayer/StarterPlayerScripts/MenuSceneVisualController.lua`
 - Menu UI app: `src/StarterGui/MenuUI/MenuApp.client.lua`
 - Menu orchestration: `src/ReplicatedStorage/Menu/MenuController.lua`
+- Asset pack catalog: `src/ReplicatedStorage/Menu/MenuAssetCatalog.lua`
 - Teleport wrapper: `src/ReplicatedStorage/Menu/TeleportClient.lua`
 - Party scaffold client: `src/ReplicatedStorage/Party/PartyClient.lua`
 - Party scaffold server: `src/ServerScriptService/PartyServer.server.lua`
+- Environment bootstrap loader: `src/ServerScriptService/MenuEnvironmentBootstrap.server.lua`
 - Static menu scene assets: `src/Workspace/*.model.json`
 - Post-processing shader stack assets: `src/Lighting/*.model.json`
 
@@ -29,6 +31,17 @@
 
 Teleport destinations are configured in `src/ReplicatedStorage/Menu/MenuConfig.lua`.
 Set `TeleportDestinations.Campaign.PlaceId` and `TeleportDestinations.OpenWorld.PlaceId` to your real target place IDs.
+
+## High-Quality Environment Packs
+
+`MenuEnvironmentBootstrap.server.lua` loads curated free Creator Store packs from `MenuAssetCatalog.lua` and places them around the menu skyline.
+
+1. In Studio: `Game Settings -> Security`
+2. Enable `Allow Loading Third Party Assets`
+3. In `MenuAssetCatalog.lua`, toggle `Enabled = true/false` per pack
+4. Test in Play Solo; imported content appears under `Workspace/ImportedMenuAssets`
+
+By default the script strips scripts/modules from imported assets for safety and anchors everything for menu stability.
 
 ## Scene Behavior
 
