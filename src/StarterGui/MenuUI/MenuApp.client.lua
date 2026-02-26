@@ -1,22 +1,24 @@
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local menuFolder = ReplicatedStorage:WaitForChild("Menu")
+local MenuController = require(menuFolder:WaitForChild("MenuController"))
 
 local modules = script:WaitForChild("Modules")
-local MenuUI = require(modules:WaitForChild("MenuUI"))
-local MenuAnimations = require(modules:WaitForChild("MenuAnimations"))
+local MenuBuild = require(modules:WaitForChild("MenuBuild"))
+local MenuAnim = require(modules:WaitForChild("MenuAnim"))
 
 local localPlayer = Players.LocalPlayer
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 
-local menuUI = MenuUI.new(playerGui)
-local menuAnimations = MenuAnimations.new(menuUI)
+local controller = MenuController.new({
+	PlayerGui = playerGui,
+	MenuBuild = MenuBuild,
+	MenuAnim = MenuAnim,
+})
 
-menuUI:SetActionHandler(function()
-	-- Action handling is intentionally left for gameplay wiring.
-end)
-
-menuAnimations:PlayIntro()
+controller:Start()
 
 script.Destroying:Connect(function()
-	menuAnimations:Destroy()
-	menuUI:Destroy()
+	controller:Destroy()
 end)
